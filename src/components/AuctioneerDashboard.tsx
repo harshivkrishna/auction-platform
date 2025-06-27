@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gavel, Users, DollarSign, Clock, Mic, MicOff, Settings, Play, Pause, Square } from 'lucide-react';
+import { Gavel, Users, DollarSign, Clock, Mic, MicOff, Settings, Play, Pause, Square, LogOut } from 'lucide-react';
 import { Auction, AuctionItem, Participant } from '../types/auction';
 import { auctionService } from '../services/auctionService';
 import { voiceService } from '../services/voiceService';
@@ -83,6 +83,12 @@ const AuctioneerDashboard: React.FC<AuctioneerDashboardProps> = ({ auctioneer })
     }
   };
 
+  // Add a placeholder logout handler
+  const handleLogout = () => {
+    // TODO: Implement actual logout logic (clear auth, redirect, etc.)
+    window.location.href = '/login';
+  };
+
   if (!auction) return <div>Loading...</div>;
 
   const participantCount = auction.participants.size;
@@ -115,6 +121,15 @@ const AuctioneerDashboard: React.FC<AuctioneerDashboardProps> = ({ auctioneer })
                   Status: <span className="capitalize">{auction.status}</span>
                 </p>
               </div>
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
             </div>
           </div>
         </div>
