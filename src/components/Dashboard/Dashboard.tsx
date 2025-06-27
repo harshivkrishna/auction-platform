@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Plus, Search, Filter, Calendar, Users, DollarSign, Clock, LogOut } from 'lucide-react';
+import { Plus, Search, Filter, Calendar, Users, DollarSign, Clock } from 'lucide-react';
 import api from '../../services/api';
 import CreateAuctionModal from './CreateAuctionModal';
 import JoinAuctionModal from './JoinAuctionModal';
@@ -118,10 +118,9 @@ const Dashboard: React.FC = () => {
               )}
               <button
                 onClick={logout}
-                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg transition-colors"
               >
-                <LogOut className="w-5 h-5" />
-                <span>Logout</span>
+                Logout
               </button>
             </div>
           </div>
