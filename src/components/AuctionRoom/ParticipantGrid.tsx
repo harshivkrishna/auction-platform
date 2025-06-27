@@ -17,14 +17,14 @@ const ParticipantGrid: React.FC<ParticipantGridProps> = ({
   const remainingCount = Math.max(0, participants.length - maxVisible);
 
   return (
-    <div className="h-fit">
-      <div className="flex items-center justify-between mb-4">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h3 className="text-lg font-semibold text-white">
           Participants ({participants.length})
         </h3>
       </div>
       
-      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 h-full">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 flex-1 overflow-y-auto">
         {visibleParticipants.map((participant) => {
           const user = participant.user;
           const isCurrentUser = user._id === currentUser?._id;
@@ -34,7 +34,7 @@ const ParticipantGrid: React.FC<ParticipantGridProps> = ({
           return (
             <div
               key={user._id}
-              className={`relative bg-gray-800 rounded-lg p-3 flex flex-col items-center justify-center transition-all duration-300 ${
+              className={`relative bg-gray-800 rounded-lg p-3 m-3 flex flex-col items-center justify-center transition-all duration-300 w-32 h-32 ${
                 isVoiceActive ? 'ring-2 ring-green-400 bg-green-900/20' : ''
               } ${isCurrentUser ? 'ring-2 ring-blue-400' : ''}`}
             >
@@ -84,7 +84,7 @@ const ParticipantGrid: React.FC<ParticipantGridProps> = ({
         
         {/* Show remaining count if there are more participants */}
         {remainingCount > 0 && (
-          <div className="bg-gray-700 rounded-lg p-3 flex flex-col items-center justify-center">
+          <div className="bg-gray-700 rounded-lg p-3 flex flex-col items-center justify-center w-32 h-32">
             <div className="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center mb-2">
               <span className="text-white font-bold">+{remainingCount}</span>
             </div>

@@ -65,7 +65,9 @@ const AuctionRoom: React.FC = () => {
         setCurrentBid(latestBid);
       }
     } catch (error: any) {
-      toast.error('Failed to load auction');
+      if (error.response?.status !== 404) {
+        toast.error('Failed to load auction');
+      }
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -186,27 +188,19 @@ const AuctionRoom: React.FC = () => {
   const currentBidAmount = currentBid?.amount || auction.item.startingPrice;
 
   return (
-    <div className="h-fit bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       {/* Header */}
       <AuctionHeader 
         auction={auction} 
+        currentBidAmount={currentBidAmount}
         onLeave={() => navigate('/dashboard')}
       />
 
-      <div className="flex flex-1 h-[calc(100vh-80px)]">
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Top Section - Participants Grid */}
-          <div className="h-1/3 p-4">
-            <ParticipantGrid 
-              participants={participants}
-              voiceActivity={voiceActivity}
-              currentUser={user}
-            />
-          </div>
-
-          {/* Middle Section - Current Bid Display */}
-          <div className="h-1/3 flex items-center justify-center p-4">
+      <div className="flex flex-1 h-[calc(100vh-80px)] overflow-hidden">
+        {/* Main Content - Left Side */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {/* Top Section - Current Bid Display (full width) */}
+          <div className="p-4 flex-shrink-0">
             <CurrentBidDisplay 
               currentBid={currentBidAmount}
               bidderName={currentBid?.bidderName}
@@ -216,9 +210,18 @@ const AuctionRoom: React.FC = () => {
             />
           </div>
 
-          {/* Bottom Section - Voice Controls */}
-          <div className="h-1/3 p-4">
-            {!isAuctioneer && (
+          {/* Participants Grid (fills remaining space) */}
+          <div className="flex-1 p-4 min-h-0 overflow-hidden">
+            <ParticipantGrid 
+              participants={participants}
+              voiceActivity={voiceActivity}
+              currentUser={user}
+            />
+          </div>
+
+          {/* Voice Controls (if not auctioneer) - now directly after participants */}
+          {!isAuctioneer && (
+            <div className="p-4 flex-shrink-0">
               <VoiceControls 
                 onVoiceCommand={handleVoiceCommand}
                 onManualBid={handleManualBid}
@@ -227,15 +230,15 @@ const AuctionRoom: React.FC = () => {
                 minIncrement={auction.minBidIncrement}
                 isActive={auction.status === 'active'}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col">
+        <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col min-h-0">
           {/* Auctioneer Controls */}
           {isAuctioneer && (
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <AuctioneerControls 
                 auction={auction}
                 onStart={handleStartAuction}
@@ -245,7 +248,7 @@ const AuctionRoom: React.FC = () => {
           )}
 
           {/* Bid History */}
-          <div className="flex-1 overflow-hidden">
+          <div className="overflow-hidden min-h-0">
             <BidHistory bids={bids} />
           </div>
         </div>

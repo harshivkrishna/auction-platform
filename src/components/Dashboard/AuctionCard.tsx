@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Clock, Play, Eye } from 'lucide-react';
+import { Calendar, Users, DollarSign, Clock, Play, Eye, Trash2 } from 'lucide-react';
+import api from '../../services/api';
 
 interface AuctionCardProps {
   auction: {
@@ -22,10 +23,13 @@ interface AuctionCardProps {
     endTime?: string;
   };
   userRole: string;
+  onDelete?: (auctionId: string) => void;
 }
 
-const AuctionCard: React.FC<AuctionCardProps> = ({ auction, userRole }) => {
+const AuctionCard: React.FC<AuctionCardProps> = ({ auction, userRole, onDelete }) => {
   const navigate = useNavigate();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -45,8 +49,23 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, userRole }) => {
     }
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking delete
+    if ((e.target as HTMLElement).closest('.delete-btn')) return;
     navigate(`/auction/${auction._id}`);
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await api.delete(`/auctions/${auction._id}`);
+      setShowConfirm(false);
+      if (onDelete) onDelete(auction._id);
+    } catch (err) {
+      alert('Failed to delete auction.');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const currentBid = auction.bids.length > 0 
@@ -56,7 +75,7 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, userRole }) => {
   return (
     <div 
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
+      className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden relative"
     >
       <div className="relative">
         <img 
@@ -114,11 +133,49 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ auction, userRole }) => {
               }
             </span>
           </div>
-          <span className="text-blue-500 font-semibold">
-            {userRole === 'auctioneer' ? 'Manage' : 'Join'}
-          </span>
+          <div className="flex items-center space-x-3">
+            <span className="text-blue-500 font-semibold">
+              {userRole === 'auctioneer' ? 'Manage' : 'Join'}
+            </span>
+            {userRole === 'auctioneer' && (
+              <button
+                className="delete-btn flex items-center space-x-1 text-red-500 hover:text-red-700 px-2 py-1 rounded transition-colors border border-red-200 hover:border-red-400"
+                onClick={e => { e.stopPropagation(); setShowConfirm(true); }}
+                disabled={deleting}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg p-6 shadow-xl w-full max-w-xs">
+            <h4 className="text-lg font-bold mb-4 text-gray-900">Delete Auction?</h4>
+            <p className="text-gray-700 mb-6">Are you sure you want to delete <span className="font-semibold">{auction.title}</span>? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300"
+                onClick={() => setShowConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -21,7 +21,7 @@ const BidHistory: React.FC<BidHistoryProps> = ({ bids }) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="max-h-[300px] overflow-y-auto p-4 space-y-3">
         {sortedBids.length > 0 ? (
           sortedBids.map((bid, index) => (
             <div

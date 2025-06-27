@@ -60,3 +60,19 @@ export const requireRole = (roles) => {
     next();
   };
 };
+
+export const requireAuctioneer = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Authentication required' 
+    });
+  }
+  if (req.user.role !== 'auctioneer') {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Auctioneer access required' 
+    });
+  }
+  next();
+};

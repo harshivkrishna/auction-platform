@@ -4,6 +4,7 @@ import Auction from '../models/Auction.js';
 import User from '../models/User.js';
 import { requireRole } from '../middleware/auth.js';
 import { io } from '../index.js';
+import { authenticateToken, requireAuctioneer } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -306,6 +307,19 @@ router.patch('/:id/end', async (req, res) => {
       message: 'Failed to end auction',
       error: error.message
     });
+  }
+});
+
+// DELETE /auctions/:id
+router.delete('/:id', authenticateToken, requireAuctioneer, async (req, res) => {
+  try {
+    const auction = await Auction.findByIdAndDelete(req.params.id);
+    if (!auction) {
+      return res.status(404).json({ message: 'Auction not found' });
+    }
+    res.json({ message: 'Auction deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

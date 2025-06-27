@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { LogOut, Users, Clock, Hash } from 'lucide-react';
+import { LogOut, Users, Clock, Hash, DollarSign } from 'lucide-react';
 
 interface AuctionHeaderProps {
   auction: {
@@ -9,10 +9,11 @@ interface AuctionHeaderProps {
     participants: any[];
     startTime?: string;
   };
+  currentBidAmount?: number;
   onLeave: () => void;
 }
 
-const AuctionHeader: React.FC<AuctionHeaderProps> = ({ auction, onLeave }) => {
+const AuctionHeader: React.FC<AuctionHeaderProps> = ({ auction, currentBidAmount, onLeave }) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -66,6 +67,16 @@ const AuctionHeader: React.FC<AuctionHeaderProps> = ({ auction, onLeave }) => {
         </div>
 
         <div className="flex items-center space-x-6">
+          {/* Current Bid Amount */}
+          {currentBidAmount && (
+            <div className="flex items-center space-x-2 bg-blue-600 px-4 py-2 rounded-lg">
+              <DollarSign className="w-5 h-5 text-white" />
+              <span className="text-white font-bold text-lg">
+                ${currentBidAmount.toLocaleString()}
+              </span>
+            </div>
+          )}
+
           <div className="flex items-center space-x-4 text-gray-300">
             <div className="flex items-center space-x-2">
               <Users className="w-5 h-5" />
