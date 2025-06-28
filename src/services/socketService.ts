@@ -76,66 +76,77 @@ class SocketService {
 
   onAuctionState(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('auction_state');
       this.socket.on('auction_state', callback);
     }
   }
 
   onNewBid(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('new_bid');
       this.socket.on('new_bid', callback);
     }
   }
 
   onParticipantJoined(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('participant_joined');
       this.socket.on('participant_joined', callback);
     }
   }
 
   onParticipantLeft(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('participant_left');
       this.socket.on('participant_left', callback);
     }
   }
 
   onUserJoined(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('user_joined');
       this.socket.on('user_joined', callback);
     }
   }
 
   onUserLeft(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('user_left');
       this.socket.on('user_left', callback);
     }
   }
 
   onVoiceActivity(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('participant_voice_activity');
       this.socket.on('participant_voice_activity', callback);
     }
   }
 
   onVoiceCommandProcessed(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('voice_command_processed');
       this.socket.on('voice_command_processed', callback);
     }
   }
 
   onBidResult(callback: (result: any) => void) {
     if (this.socket) {
+      this.socket.off('bid_result');
       this.socket.on('bid_result', callback);
     }
   }
 
   onAuctionStarted(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('auction_started');
       this.socket.on('auction_started', callback);
     }
   }
 
   onAuctionEnded(callback: (data: any) => void) {
     if (this.socket) {
+      this.socket.off('auction_ended');
       this.socket.on('auction_ended', callback);
     }
   }

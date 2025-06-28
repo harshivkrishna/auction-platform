@@ -42,10 +42,8 @@ const AuctionRoom: React.FC = () => {
 
   useEffect(() => {
     if (!id || !token) return;
-
     fetchAuction();
     setupSocket();
-
     return () => {
       if (socketRef.current) {
         socketService.offAllListeners();
@@ -61,10 +59,11 @@ const AuctionRoom: React.FC = () => {
       setAuction(auctionData);
       setParticipants(auctionData.participants || []);
       setBids(auctionData.bids || []);
-      
       if (auctionData.bids && auctionData.bids.length > 0) {
         const latestBid = auctionData.bids[auctionData.bids.length - 1];
         setCurrentBid(latestBid);
+      } else {
+        setCurrentBid(null);
       }
     } catch (error: any) {
       if (error.response?.status !== 404) {
@@ -78,13 +77,9 @@ const AuctionRoom: React.FC = () => {
 
   const setupSocket = () => {
     if (!token) return;
-
     socketRef.current = socketService.connect(token);
-    
-    // Join the auction room
     socketService.joinAuction(id!);
 
-    // Set up event listeners
     socketService.onAuctionState((data) => {
       setAuction(data.auction);
       setParticipants(data.auction.participants || []);
@@ -94,23 +89,30 @@ const AuctionRoom: React.FC = () => {
       }
     });
 
-    socketService.onNewBid((data) => {
-      setBids(prev => [...prev, data.bid]);
-      setCurrentBid(data.bid);
-      setLastBidResult({ success: true, data: { bid: data.bid } });
-      setIsProcessingCommand(false);
-      toast.success(`New bid: $${data.bid.amount.toLocaleString()}`);
-    });
-
-    // Listen for both user_joined and participant_joined events
     socketService.onUserJoined((data) => {
-      setParticipants(prev => [...prev, { user: data.user, joinedAt: data.timestamp, isActive: true }]);
-      toast.success(`${data.user.name} joined the auction`);
+      setParticipants(prev => {
+        if (prev.some(p => p.user._id === data.user._id)) return prev;
+        toast.success(`${data.user.name} joined the auction`);
+        return [...prev, { user: data.user, joinedAt: data.timestamp, isActive: true }];
+      });
     });
 
     socketService.onParticipantJoined((data) => {
-      setParticipants(prev => [...prev, data.participant]);
-      toast.success(`${data.participant.user.name} joined the auction`);
+      setParticipants(prev => {
+        if (prev.some(p => p.user._id === data.participant.user._id)) return prev;
+        return [...prev, data.participant];
+      });
+    });
+
+    socketService.onNewBid((data) => {
+      setBids(prev => {
+        if (prev.some(bid => bid.id === data.bid.id || bid._id === data.bid._id)) return prev;
+        toast.success(`New bid: $${data.bid.amount.toLocaleString()}`);
+        return [...prev, data.bid];
+      });
+      setCurrentBid(data.bid);
+      setLastBidResult({ success: true, data: { bid: data.bid } });
+      setIsProcessingCommand(false);
     });
 
     socketService.onUserLeft((data) => {
@@ -137,19 +139,13 @@ const AuctionRoom: React.FC = () => {
       if (data.result.type === 'error') {
         setLastBidResult({ success: false, message: data.result.message });
         toast.error(data.result.message);
-      } else if (data.result.type === 'bid') {
-        // Only show feedback, do not update bid state here
-        toast.success('Bid command processed');
       }
     });
 
-    // Listen for bid results from manual bids
     socketService.onBidResult((result) => {
       setIsProcessingCommand(false);
       if (result.success && result.data.bid) {
-        // No need to update bid state here, onNewBid will handle it
         setLastBidResult(result);
-        toast.success(`Bid placed: $${result.data.bid.amount.toLocaleString()}`);
       } else if (!result.success) {
         setLastBidResult(result);
         toast.error(result.message || 'Failed to place bid');
