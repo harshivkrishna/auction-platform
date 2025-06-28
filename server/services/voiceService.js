@@ -9,6 +9,7 @@ const extractCommandIntent = (text) => {
   
   // Bid patterns
   const bidPatterns = [
+    /\$?\s*(\d+)[\.,]?/i,
     /bid\s+(\d+)/i,
     /(\d+)\s*dollars?/i,
     /i\s+bid\s+(\d+)/i,

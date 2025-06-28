@@ -8,6 +8,8 @@ interface VoiceControlsProps {
   currentBid: number;
   minIncrement: number;
   isActive: boolean;
+  lastBidResult?: any;
+  isProcessingCommand?: boolean;
 }
 
 interface PendingBid {
@@ -23,7 +25,9 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   onVoiceActivity,
   currentBid,
   minIncrement,
-  isActive
+  isActive,
+  lastBidResult,
+  isProcessingCommand
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
@@ -32,6 +36,37 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout>();
   const recognitionRef = useRef<any>(null);
+
+  // Update processing state based on server state
+  useEffect(() => {
+    setIsProcessing(isProcessingCommand || false);
+  }, [isProcessingCommand]);
+
+  // Handle bid results from server
+  useEffect(() => {
+    if (lastBidResult) {
+      if (lastBidResult.success && lastBidResult.data?.bid) {
+        // Find the corresponding pending bid and mark it as confirmed
+        const bidAmount = lastBidResult.data.bid.amount;
+        setPendingBids(prev => 
+          prev.map(bid => 
+            bid.amount === bidAmount && bid.status === 'pending' 
+              ? { ...bid, status: 'confirmed' as const }
+              : bid
+          )
+        );
+      } else if (!lastBidResult.success) {
+        // Mark pending bids as failed
+        setPendingBids(prev => 
+          prev.map(bid => 
+            bid.status === 'pending' 
+              ? { ...bid, status: 'failed' as const }
+              : bid
+          )
+        );
+      }
+    }
+  }, [lastBidResult]);
 
   useEffect(() => {
     if (isListening) {
@@ -102,21 +137,14 @@ const VoiceControls: React.FC<VoiceControlsProps> = ({
       setLastCommand(transcript);
       setIsProcessing(true);
       
-      // Check if it's a bid command
+      // Check if it's a bid command and add to pending
       const bidMatch = transcript.toLowerCase().match(/bid\s+(\d+)/);
       if (bidMatch) {
         const amount = parseInt(bidMatch[1]);
-        const bidId = addPendingBid(amount);
-        
-        // Simulate server processing
-        setTimeout(() => {
-          updatePendingBid(bidId, Math.random() > 0.1 ? 'confirmed' : 'failed');
-          setIsProcessing(false);
-        }, 1000 + Math.random() * 2000);
-      } else {
-        setIsProcessing(false);
+        addPendingBid(amount);
       }
       
+      // Send the actual voice command to the server
       onVoiceCommand(transcript, confidence);
       setIsListening(false);
       onVoiceActivity(false);

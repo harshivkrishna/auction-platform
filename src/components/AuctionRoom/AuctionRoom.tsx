@@ -36,6 +36,8 @@ const AuctionRoom: React.FC = () => {
   const [currentBid, setCurrentBid] = useState<any>(null);
   const [bids, setBids] = useState<any[]>([]);
   const [voiceActivity, setVoiceActivity] = useState<Map<string, boolean>>(new Map());
+  const [lastBidResult, setLastBidResult] = useState<any>(null);
+  const [isProcessingCommand, setIsProcessingCommand] = useState(false);
   const socketRef = useRef<any>(null);
 
   useEffect(() => {
@@ -95,12 +97,20 @@ const AuctionRoom: React.FC = () => {
     socketService.onNewBid((data) => {
       setBids(prev => [...prev, data.bid]);
       setCurrentBid(data.bid);
+      setLastBidResult({ success: true, data: { bid: data.bid } });
+      setIsProcessingCommand(false);
       toast.success(`New bid: $${data.bid.amount.toLocaleString()}`);
     });
 
+    // Listen for both user_joined and participant_joined events
     socketService.onUserJoined((data) => {
       setParticipants(prev => [...prev, { user: data.user, joinedAt: data.timestamp, isActive: true }]);
       toast.success(`${data.user.name} joined the auction`);
+    });
+
+    socketService.onParticipantJoined((data) => {
+      setParticipants(prev => [...prev, data.participant]);
+      toast.success(`${data.participant.user.name} joined the auction`);
     });
 
     socketService.onUserLeft((data) => {
@@ -123,19 +133,39 @@ const AuctionRoom: React.FC = () => {
     });
 
     socketService.onVoiceCommandProcessed((data) => {
+      setIsProcessingCommand(false);
       if (data.result.type === 'error') {
+        setLastBidResult({ success: false, message: data.result.message });
         toast.error(data.result.message);
+      } else if (data.result.type === 'bid') {
+        // Only show feedback, do not update bid state here
+        toast.success('Bid command processed');
+      }
+    });
+
+    // Listen for bid results from manual bids
+    socketService.onBidResult((result) => {
+      setIsProcessingCommand(false);
+      if (result.success && result.data.bid) {
+        // No need to update bid state here, onNewBid will handle it
+        setLastBidResult(result);
+        toast.success(`Bid placed: $${result.data.bid.amount.toLocaleString()}`);
+      } else if (!result.success) {
+        setLastBidResult(result);
+        toast.error(result.message || 'Failed to place bid');
       }
     });
   };
 
   const handleVoiceCommand = (command: string, confidence: number = 0.9) => {
     if (!auction) return;
+    setIsProcessingCommand(true);
     socketService.sendVoiceCommand(auction._id, command, confidence);
   };
 
   const handleManualBid = (amount: number) => {
     if (!auction) return;
+    setIsProcessingCommand(true);
     socketService.sendManualBid(auction._id, amount);
   };
 
@@ -229,6 +259,8 @@ const AuctionRoom: React.FC = () => {
                 currentBid={currentBidAmount}
                 minIncrement={auction.minBidIncrement}
                 isActive={auction.status === 'active'}
+                lastBidResult={lastBidResult}
+                isProcessingCommand={isProcessingCommand}
               />
             </div>
           )}

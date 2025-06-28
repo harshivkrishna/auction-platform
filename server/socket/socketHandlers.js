@@ -85,6 +85,17 @@ export const setupSocketHandlers = (io) => {
           timestamp: new Date()
         });
 
+        // Also emit participant_joined for consistency
+        socket.to(`auction_${auctionId}`).emit('participant_joined', {
+          auctionId,
+          participant: {
+            user: socket.user,
+            joinedAt: new Date(),
+            isActive: true,
+            voiceActive: false
+          }
+        });
+
       } catch (error) {
         console.error('Join auction error:', error);
         socket.emit('error', { message: 'Failed to join auction' });
@@ -128,9 +139,16 @@ export const setupSocketHandlers = (io) => {
               timestamp: new Date()
             });
           }
+        } else {
+          // Send error result to the user
+          socket.emit('voice_command_processed', {
+            auctionId,
+            participant: socket.user,
+            command,
+            result: result,
+            timestamp: new Date()
+          });
         }
-
-        socket.emit('command_result', result);
 
       } catch (error) {
         console.error('Voice command error:', error);

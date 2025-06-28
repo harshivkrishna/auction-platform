@@ -122,6 +122,12 @@ class SocketService {
     }
   }
 
+  onBidResult(callback: (result: any) => void) {
+    if (this.socket) {
+      this.socket.on('bid_result', callback);
+    }
+  }
+
   onAuctionStarted(callback: (data: any) => void) {
     if (this.socket) {
       this.socket.on('auction_started', callback);
