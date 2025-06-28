@@ -11,6 +11,7 @@ import CurrentBidDisplay from './CurrentBidDisplay';
 import VoiceControls from './VoiceControls';
 import BidHistory from './BidHistory';
 import AuctioneerControls from './AuctioneerControls';
+import AuctioneerMicBroadcast from './AuctioneerMicBroadcast';
 
 interface Auction {
   _id: string;
@@ -186,6 +187,40 @@ const AuctionRoom: React.FC = () => {
     }
   };
 
+  // Listen for auctioneer audio and play it (for participants only)
+  useEffect(() => {
+    if (!user?._id === auction?.auctioneer._id) {
+      let audioContext: AudioContext | null = null;
+      let source: MediaSource | null = null;
+      let audioQueue: Blob[] = [];
+      let isPlaying = false;
+
+      const playAudio = async (blob: Blob) => {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        }
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const bufferSource = audioContext.createBufferSource();
+        bufferSource.buffer = audioBuffer;
+        bufferSource.connect(audioContext.destination);
+        bufferSource.start();
+      };
+
+      const handleAuctioneerAudio = (data: any) => {
+        if (data && data.audio) {
+          playAudio(new Blob([data.audio], { type: 'audio/webm' }));
+        }
+      };
+
+      socketService.onAuctioneerAudio(handleAuctioneerAudio);
+      return () => {
+        // No need to disconnect audio context, just remove listener
+        socketService.onAuctioneerAudio(() => {});
+      };
+    }
+  }, [user?._id, auction?.auctioneer._id]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -237,12 +272,18 @@ const AuctionRoom: React.FC = () => {
           </div>
 
           {/* Participants Grid (fills remaining space) */}
-          <div className="flex-1 p-4 min-h-0 overflow-hidden">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <ParticipantGrid 
               participants={participants}
               voiceActivity={voiceActivity}
               currentUser={user}
             />
+            {/* Auctioneer Mic Broadcast - only for auctioneer */}
+            {isAuctioneer && (
+              <div className="mt-8 flex justify-center items-center w-full">
+                <AuctioneerMicBroadcast auctionId={auction._id} />
+              </div>
+            )}
           </div>
 
           {/* Voice Controls (if not auctioneer) - now directly after participants */}

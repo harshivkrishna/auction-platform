@@ -231,5 +231,16 @@ export const setupSocketHandlers = (io) => {
         }
       }
     });
+
+    // Handle auctioneer audio chunk
+    socket.on('auctioneer_audio_chunk', (data) => {
+      const { auctionId, audio } = data;
+      // Broadcast to all participants except the auctioneer
+      socket.to(`auction_${auctionId}`).emit('auctioneer_audio', {
+        auctionId,
+        audio,
+        from: socket.userId
+      });
+    });
   });
 };

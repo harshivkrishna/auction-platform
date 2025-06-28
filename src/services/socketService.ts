@@ -156,6 +156,22 @@ class SocketService {
       this.socket.removeAllListeners();
     }
   }
+
+  emitAuctioneerAudioChunk(auctionId: string, audioBlob: Blob) {
+    if (this.socket) {
+      this.socket.emit('auctioneer_audio_chunk', {
+        auctionId,
+        audio: audioBlob
+      });
+    }
+  }
+
+  onAuctioneerAudio(callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.off('auctioneer_audio');
+      this.socket.on('auctioneer_audio', callback);
+    }
+  }
 }
 
 export const socketService = new SocketService();
